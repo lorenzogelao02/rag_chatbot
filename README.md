@@ -28,19 +28,39 @@ Docker wraps your application and **everything it needs** (Operating System, Pyt
 
 ## 🚀 How to Run
 
-### 1. Build the "Box" (Image)
-This creates the Docker image based on our `Dockerfile`.
+### 1. Install & Run Ollama (The Brain)
+This project uses a **Local LLM** (TinyLlama) instead of OpenAI to be 100% free and private.
+1.  Download [Ollama](https://ollama.com).
+2.  Open a terminal and run:
+    ```powershell
+    ollama run tinyllama
+    ```
+    (Keep this terminal running or just ensure Ollama is active).
+
+### 2. Build the Docker Image
 ```bash
 docker build -t rag-chatbot .
 ```
 
-### 2. Run the App
-This starts the container and forwards port 8000 from the container to port 8000 on your PC.
+### 3. Ingest Documents (Prepare the Brain)
+Before chatting, you need to turn your PDFs into a format the AI can understand (Vectors).
+1. Place your PDF files in the `data/` folder.
+2. Run the ingestion script inside the Docker container:
+   ```bash
+   docker run --rm -v ${PWD}/chroma_db:/app/chroma_db -v ${PWD}/data:/app/data rag-chatbot python app/rag.py
+   ```
+   This will read PDFs from `data/`, convert them, and save the database to `chroma_db/`.
+
+### 4. Run the App
+We need to give Docker access to the Ollama server running on your host machine.
 ```bash
-docker run -p 8000:8000 rag-chatbot
+docker run -p 8000:8000 --add-host=host.docker.internal:host-gateway -v ${PWD}/chroma_db:/app/chroma_db rag-chatbot
 ```
 
-### 3. Usage
+### 5. Interactive API
+Go to [http://localhost:8000/docs](http://localhost:8000/docs) to chat with your PDF!
+
+### 6. Usage
 - **Status Check**: [http://localhost:8000](http://localhost:8000)
 - **Interactive API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
