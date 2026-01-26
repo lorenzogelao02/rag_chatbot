@@ -23,4 +23,4 @@ class Settings:
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
 
     # Instantiate setting so It can be imported
-    setting = Settings()
+    settings = Settings()
