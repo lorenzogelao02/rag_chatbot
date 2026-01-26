@@ -1,10 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.chat_models import ChatOllama
 from langchain.chains import RetrievalQA
 from app.config import settings
+from app.utils import get_vector_store, get_llm
 
 app = FastAPI()
 
@@ -13,17 +11,9 @@ class QueryRequest(BaseModel):
     question: str
 
 # 1. Initialize the "Brain" (Vector DB)
-embedding_function = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
-
-db = Chroma(
-    persist_directory=settings.DB_PATH,
-    embedding_function=embedding_function
-)
-
+db = get_vector_store()
 # 2. Initialize the "Mouth" (Local Ollama)
-# "host.docker.internal" allows Docker to see the Ollama app running on your Windows
-# Switching to "tinyllama" because it is much smaller (fits in 1.3GB RAM)
-llm = ChatOllama(model=settings.MODEL_NAME, base_url=settings.OLLAMA_BASE_URL)
+llm = get_llm()
 
 # 3. Connect them (The "RAG" Chain)
 qa_chain = RetrievalQA.from_chain_type(
