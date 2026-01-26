@@ -2,11 +2,8 @@ import os
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from app.config import settings
-
-DATA_PATH = "/app/data"       # Directory containing your PDFs
-DB_PATH = "/app/chroma_db"    # Directory for the vector database
+from app.utils import get_embedding_function
 
 def ingest_documents():
     # 1. Load Data
@@ -28,8 +25,8 @@ def ingest_documents():
 
     # 3. Add to Vector DB
     # We use the same model as in main.py to ensuring matching "language"
-    embedding_function = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
-
+    embedding_function = get_embedding_function()
+    
     # Save to disk
     Chroma.from_documents(
         documents=chunks,
