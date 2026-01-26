@@ -20,15 +20,15 @@ def ingest_documents():
 
     # 2. Split Text (Chunks)
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=setting.CHUNK_SIZE,      # Characters per chunk
-        chunk_overlap=setting.CHUNK_OVERLAP   # Overlap to keep context between chunks
+        chunk_size=settings.CHUNK_SIZE,      # Characters per chunk
+        chunk_overlap=settings.CHUNK_OVERLAP   # Overlap to keep context between chunks
     )
     chunks = text_splitter.split_documents(documents)
     print(f"Split pages into {len(chunks)} small chunks.")
 
     # 3. Add to Vector DB
     # We use the same model as in main.py to ensuring matching "language"
-    embedding_function = HuggingFaceEmbeddings(model_name=setting.EMBEDDING_MODEL)
+    embedding_function = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
 
     # Save to disk
     Chroma.from_documents(
