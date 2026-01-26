@@ -1,23 +1,25 @@
-# 1. Use an official lightweight Python image
-# 1. Use full Python image (needed for some AI compile tools)
-FROM python:3.9
+# 1. Use a modern, slim Python image for smaller size & speed
+FROM python:3.11-slim
 
-# 2. Set the working directory inside the container
+# 2. Set the working directory
 WORKDIR /app
 
-# 3. Copy dependencies first (caching mechanism)
-# Docker checks if this file changed. If not, it skips the install step!
+# 3. Install system build dependencies (required for ChromaDB/HNSWLib on slim images)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copy dependencies first (caching mechanism)
 COPY requirements.txt .
 
-# 4. Install dependencies
-# --no-cache-dir keeps the image small
+# 5. Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the rest of the application
+# 6. Copy the rest of the application
 COPY . .
 
-# 6. Expose the port the app runs on
+# 7. Expose the port
 EXPOSE 8000
 
-# 7. Run the app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# 8. Run the app without --reload (Production mode)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
