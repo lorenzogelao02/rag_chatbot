@@ -22,5 +22,5 @@ class Settings:
     # host.docker.internal is needed for Docker to talk to Ollama on Windows
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
 
-    # Instantiate setting so It can be imported
-    settings = Settings()
+# Instantiate setting so It can be imported
+settings = Settings()
