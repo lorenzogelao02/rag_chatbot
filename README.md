@@ -1,71 +1,65 @@
-# RAG Chatbot (Python + Docker + AI)
+# 🤖 RAG Chatbot (Python + Docker + AI)
 
-A Retrieval-Augmented Generation (RAG) chatbot built with **FastAPI** and **Docker**. This project allows you to chat with your own PDF documents using AI.
-
-## 🐳 What is Docker? (And why are we using it?)
-
-If you have ever had the problem where code works on your computer but fails on your friend's computer (missing libraries, different Python versions, etc.), Docker is the solution.
-
-### The Problem
-Normally, to run a Python app, you need to:
-1. Install Python.
-2. Install `pip`.
-3. Run `pip install -r requirements.txt`.
-4. Hope that your Windows/Mac/Linux versions match exactly.
-
-### The Docker Solution
-Docker wraps your application and **everything it needs** (Operating System, Python, Libraries, Code) into a sealed box called a **Container**.
-
-- **Dockerfile**: The "Recipe". It tells Docker how to build the box (e.g., "Start with Linux, install Python, copy my files").
-- **Image**: The "Snapshot". This is the built box. You can send this file to anyone (or any server).
-- **Container**: The "Running Box". When you click "Run", the image comes alive.
-
-### Why in this project?
-1.  **Consistency**: We need specific AI libraries (`langchain`, `chromadb`). Docker ensures you don't mess up your personal PC's Python installation.
-2.  **Deployment**: When you are ready to show this to the world, you just give the server your Docker Image. It runs instantly without manual setup.
+A Retrieval-Augmented Generation (RAG) chatbot built with **FastAPI** and **Docker**. This project allows you to chat with your own PDF documents using a local AI (Ollama).
 
 ---
 
-## 🚀 How to Run
+## 🚀 Quick Start Guide
 
-### 1. Install & Run Ollama (The Brain)
-This project uses a **Local LLM** (TinyLlama) instead of OpenAI to be 100% free and private.
-1.  Download [Ollama](https://ollama.com).
-2.  Open a terminal and run:
-    ```powershell
-    ollama run tinyllama
+### 1. Prerequisites
+You need the following installed:
+1.  **Docker Desktop** ([Download](https://www.docker.com/products/docker-desktop/))
+2.  **Ollama** ([Download](https://ollama.com/)) - To run the AI model.
+
+### 2. Prepare the AI Model
+Open a terminal and download the model (we use `tinyllama` for speed/efficiency):
+```powershell
+ollama pull tinyllama
+```
+*Keep Ollama running in the background.*
+
+### 3. Build the Application
+Open your terminal in the project folder and build the Docker image:
+```powershell
+docker build -t rag-bot .
+```
+
+### 4. Ingest Your Documents (The "Brain")
+Place your PDF files inside the `data/` folder. Then, run the ingestion script to create the vector database:
+
+```powershell
+docker run --rm -v ${PWD}/data:/app/data -v ${PWD}/chroma_db:/app/chroma_db rag-bot python -m app.rag
+```
+*   This reads PDFs from your local `data/` folder.
+*   It saves the "memory" to your local `chroma_db/` folder so it persists.
+
+### 5. Run the Chatbot
+Start the API server:
+```powershell
+docker run -p 8000:8000 -v ${PWD}/chroma_db:/app/chroma_db rag-bot
+```
+You should see: `Uvicorn running on http://0.0.0.0:8000`.
+
+---
+
+## 🧪 How to Use
+
+### Interactive Interface (Swagger UI)
+Go to: [http://localhost:8000/docs](http://localhost:8000/docs)
+1.  Click **POST /chat**.
+2.  Click **Try it out**.
+3.  Enter your question in the JSON body:
+    ```json
+    {
+      "question": "What does the CV say about the user?"
+    }
     ```
-    (Keep this terminal running or just ensure Ollama is active).
+4.  Click **Execute**.
 
-### 2. Build the Docker Image
-```bash
-docker build -t rag-chatbot .
-```
-
-### 3. Ingest Documents (Prepare the Brain)
-Before chatting, you need to turn your PDFs into a format the AI can understand (Vectors).
-1. Place your PDF files in the `data/` folder.
-2. Run the ingestion script inside the Docker container:
-   ```bash
-   docker run --rm -v ${PWD}/chroma_db:/app/chroma_db -v ${PWD}/data:/app/data rag-chatbot python app/rag.py
-   ```
-   This will read PDFs from `data/`, convert them, and save the database to `chroma_db/`.
-
-### 4. Run the App
-We need to give Docker access to the Ollama server running on your host machine.
-```bash
-docker run -p 8000:8000 --add-host=host.docker.internal:host-gateway -v ${PWD}/chroma_db:/app/chroma_db rag-chatbot
-```
-
-### 5. Interactive API
-Go to [http://localhost:8000/docs](http://localhost:8000/docs) to chat with your PDF!
-
-### 6. Usage
-- **Status Check**: [http://localhost:8000](http://localhost:8000)
-- **Interactive API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-
-## 📂 Project Structure
-- `app/`: Contains the actual Python code (`main.py`).
-- `data/`: Place your PDF files here (mapped to the container later).
-- `Dockerfile`: Instructions for building the container.
-- `requirements.txt`: List of Python libraries needed.
+### Project Structure
+*   `app/config.py`: Central configuration (Paths, Model names).
+*   `app/rag.py`: Script to ingest PDFs and create the vector database.
+*   `app/main.py`: The API server (FastAPI).
+*   `app/utils.py`: Helper functions for Database and AI connections.
+*   `data/`: Folder for your input PDFs.
+*   `chroma_db/`: Folder where the Vector Database is saved.
