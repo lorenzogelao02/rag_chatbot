@@ -8,4 +8,4 @@ chromadb==0.4.22
 pypdf==4.0.1
 tiktoken==0.5.2
 sentence-transformers>=2.6.1
-dataset==2.17.0
+datasets==2.17.0

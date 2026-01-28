@@ -26,7 +26,6 @@ def ingest_documents():
     # 3. Add to Vector DB
     # We use the same model as in main.py to ensuring matching "language"
     embedding_function = get_embedding_function()
-    
     # Save to disk
     Chroma.from_documents(
         documents=chunks,
