@@ -34,6 +34,7 @@ def ingest_dataset():
             metadata={"source": url, "title": title}
         )
         docs.append(doc)
+        print(f"   -> Added: {title}")
         count += 1
 
     # 2. Chunking (Same as before)

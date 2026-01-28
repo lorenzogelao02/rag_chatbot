@@ -1,65 +1,64 @@
-# 🤖 RAG Chatbot (Python + Docker + AI)
+# 🤖 RAG Chatbot (PDFs + Wikipedia Agent)
 
-A Retrieval-Augmented Generation (RAG) chatbot built with **FastAPI** and **Docker**. This project allows you to chat with your own PDF documents using a local AI (Ollama).
+A smart chatbot built with **FastAPI**, **Docker**, and **Ollama**.
+It has two powerful modes:
+1.  **Chat with Docs**: Read and answer questions from your local PDF files.
+2.  **Chat with Wikipedia**: Live search Wikipedia to answer general questions.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start
 
 ### 1. Prerequisites
-You need the following installed:
 1.  **Docker Desktop** ([Download](https://www.docker.com/products/docker-desktop/))
-2.  **Ollama** ([Download](https://ollama.com/)) - To run the AI model.
+2.  **Ollama** ([Download](https://ollama.com/))
 
-### 2. Prepare the AI Model
-Open a terminal and download the model (we use `tinyllama` for speed/efficiency):
+### 2. Prepare the AI
+Open a terminal and pull the lightweight model:
 ```powershell
 ollama pull tinyllama
 ```
-*Keep Ollama running in the background.*
 
-### 3. Build the Application
-Open your terminal in the project folder and build the Docker image:
+### 3. Build & Run
+Build the container:
 ```powershell
 docker build -t rag-bot .
 ```
 
-### 4. Ingest Your Documents (The "Brain")
-Place your PDF files inside the `data/` folder. Then, run the ingestion script to create the vector database:
-
+Run the bot (Agent Mode):
 ```powershell
-docker run --rm -v ${PWD}/data:/app/data -v ${PWD}/chroma_db:/app/chroma_db rag-bot python -m app.rag
+docker run -p 8000:8000 --add-host=host.docker.internal:host-gateway rag-bot
 ```
-*   This reads PDFs from your local `data/` folder.
-*   It saves the "memory" to your local `chroma_db/` folder so it persists.
-
-### 5. Run the Chatbot
-Start the API server:
-```powershell
-docker run -p 8000:8000 -v ${PWD}/chroma_db:/app/chroma_db rag-bot
-```
-You should see: `Uvicorn running on http://0.0.0.0:8000`.
+Go to **[http://localhost:8000/docs](http://localhost:8000/docs)** and start chatting!
 
 ---
 
-## 🧪 How to Use
+## 🧠 Advanced Usage
 
-### Interactive Interface (Swagger UI)
-Go to: [http://localhost:8000/docs](http://localhost:8000/docs)
-1.  Click **POST /chat**.
-2.  Click **Try it out**.
-3.  Enter your question in the JSON body:
-    ```json
-    {
-      "question": "What does the CV say about the user?"
-    }
+### Mode A: Ingest Local PDFs
+To chat with your own files (e.g., CVs, Manuals):
+1.  Put PDF files in `data/`.
+2.  Run the ingestion script:
+    ```powershell
+    docker run --rm -v ${PWD}/data:/app/data -v ${PWD}/chroma_db:/app/chroma_db rag-bot python -m app.rag
     ```
-4.  Click **Execute**.
+    *This creates a local "Brain" in the `chroma_db` folder.*
 
-### Project Structure
-*   `app/config.py`: Central configuration (Paths, Model names).
-*   `app/rag.py`: Script to ingest PDFs and create the vector database.
-*   `app/main.py`: The API server (FastAPI).
-*   `app/utils.py`: Helper functions for Database and AI connections.
-*   `data/`: Folder for your input PDFs.
-*   `chroma_db/`: Folder where the Vector Database is saved.
+### Mode B: Ingest Wikipedia Dataset
+To build a knowledge base from random Wikipedia articles (Streaming):
+```powershell
+docker run --rm -v ${PWD}/chroma_db:/app/chroma_db rag-bot python -m app.ingest_dataset
+```
+
+---
+
+## ⚙️ Configuration
+You can change settings in `app/config.py` or by passing Environment Variables to Docker:
+-   `MODEL_NAME`: Change to `mistral` or `gemma:2b` for smarter answers.
+-   `CHUNK_SIZE`: Adjust how text is split.
+
+## 📂 Project Structure
+*   `app/main.py`: The API Agent (Decides to search Wiki or answer directly).
+*   `app/rag.py`: Script to ingest PDFs.
+*   `app/ingest_dataset.py`: Utility to stream datasets from HuggingFace.
+*   `app/config.py`: Central settings.

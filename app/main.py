@@ -1,8 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
-from langchain.agents import initialize_agent, AgentType
+from langchain.schema import HumanMessage, SystemMessage
 from app.utils import get_llm
 
 app = FastAPI()
@@ -10,35 +9,44 @@ app = FastAPI()
 class QueryRequest(BaseModel):
     question: str
 
-# 1. Initialize the Tool (The "Hands")
-# This wrapper handles searching and summarizing Wiki pages
-wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
-
-# 2. Initialize the Brain (Ollama)
+# 1. Initialize Tools
+wiki = WikipediaAPIWrapper()
 llm = get_llm()
-
-# 3. Create the Agent (Brain + Hands)
-agent_executor = initialize_agent(
-    tools=[wikipedia], 
-    llm=llm, 
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True, # Logs thoughts to console (helpful for debugging)
-    handle_parsing_errors=True
-)
 
 @app.get("/")
 def read_root():
-    return {"Status": "Wikipedia Agent is Active", "Version": "2.0.0"}
+    return {"Status": "Robust Wrapper Bot Active", "Version": "3.0.0"}
 
 @app.post("/chat")
 def chat(request: QueryRequest):
     try:
-        # The agent decides strictly what to do
-        response = agent_executor.invoke(request.question)
+        # Step 1: Search Wikipedia Manually (Python does this, not the AI)
+        # This prevents the AI from getting confused or stuck
+        print(f"Searching Wikipedia for: {request.question}")
+        wiki_results = wiki.run(request.question)
+        
+        # Step 2: Construct a Prompt with the context
+        query = f"""
+        Answer the user's question based ONLY on the following context from Wikipedia.
+        
+        CONTEXT:
+        {wiki_results}
+        
+        QUESTION: 
+        {request.question}
+        """
+        
+        # Step 3: Fast Answer
+        response = llm.invoke(query)
+        
+        # Handle the response format (LangChain ChatModel returns a message object)
+        answer_text = response.content if hasattr(response, 'content') else str(response)
+
         return {
             "question": request.question,
-            "answer": response["output"]
+            "answer": answer_text,
+            "context_found": len(wiki_results) > 0 # Debug info
         }
+
     except Exception as e:
-        # If the agent gets confused or fails
-        return {"question": request.question, "answer": f"Error: {str(e)}"}
+        return {"error": str(e)}
